@@ -157,6 +157,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: "./assets/favicon.png",
   },
   extra: {
+    ...(typeof config.extra === 'object' && config.extra !== null
+      ? config.extra
+      : {}),
     appEnv: APP_ENV,
     apiBaseUrl: resolveApiBaseUrl(APP_ENV),
   },
