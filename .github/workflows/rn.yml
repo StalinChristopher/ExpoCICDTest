@@ -1,0 +1,225 @@
+# React Native CI/CD — orchestrator: JS + bare dev builds + Expo EAS (label run-eas on PR; push = Firebase).
+
+name: React Native CI/CD
+
+on:
+  push:
+    branches: [main, master, development]
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main, master, development]
+  workflow_dispatch:
+    inputs:
+      build_system:
+        description: "auto (eas.json → expo-local if present) | bare"
+        type: choice
+        options: [auto, bare]
+        default: auto
+      package_manager:
+        description: "auto | npm | yarn (passed to install_js_deps in reusable jobs that support it)"
+        type: string
+        default: auto
+      run_internal_release_only:
+        description: Reserved for internal-only mode
+        type: boolean
+        default: false
+
+concurrency:
+  group: rn-ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      build_system: ${{ steps.pick.outputs.build_system }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: pick
+        run: |
+          BS="${{ github.event.inputs.build_system }}"
+          if [ -z "$BS" ] || [ "$BS" = "auto" ]; then
+            if [ -f "eas.json" ]; then
+              echo "build_system=expo-local" >> $GITHUB_OUTPUT
+            else
+              echo "build_system=bare" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "build_system=$BS" >> $GITHUB_OUTPUT
+          fi
+
+  js-lint:
+    needs: [detect]
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false }}
+    uses: ./.github/workflows/rn-job-js-lint.yml
+
+  security:
+    needs: [detect]
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false }}
+    uses: ./.github/workflows/rn-job-security.yml
+    secrets: inherit
+
+  js-test:
+    needs: [js-lint, security]
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false }}
+    uses: ./.github/workflows/rn-job-js-test.yml
+    with:
+      coverage_threshold_percent: "80"
+
+  # --- Bare: dev APK + dev IPA (PR = GitHub artifacts only; push to integration branch = Firebase App Distribution). Manual dist/other: rn-firebase-release.yml ---
+
+  android-dev:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      needs.detect.outputs.build_system == 'bare' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development')) ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'master' || github.base_ref == 'development')))
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-android-firebase-release-bare.yml
+    with:
+      branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      firebase_android_app: dev
+      gradle_task: assembleDevRelease
+      artifact_glob: app/build/outputs/apk/dev/release/*.apk
+      release_notes: ""
+      dry_run: false
+      upload_to_firebase: ${{ github.event_name == 'push' }}
+      firebase_groups: internal-qa
+    secrets: inherit
+
+  ios-dev:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      needs.detect.outputs.build_system == 'bare' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development')) ||
+       (github.event_name == 'pull_request' && (github.base_ref == 'main' || github.base_ref == 'master' || github.base_ref == 'development')))
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-ios-firebase-release-bare.yml
+    with:
+      branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      firebase_ios_app: dev
+      app_identifier: com.codeandtheory.edward-jones-poc.dev
+      ios_scheme: TemplatePipelineReactNative
+      dry_run: false
+      upload_to_firebase: ${{ github.event_name == 'push' }}
+      firebase_groups: internal-qa
+      release_notes: ""
+    secrets: inherit
+
+  # --- Expo (eas.json): EAS cloud on PR when label run-eas (artifacts only); push = Firebase. eas-merge-gate = required check for Expo PRs (configure in GitHub Rulesets). ---
+
+  eas-android-pr:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      github.event_name == 'pull_request' &&
+      needs.detect.outputs.build_system == 'expo-local' &&
+      (github.base_ref == 'main' || github.base_ref == 'master' || github.base_ref == 'development') &&
+      contains(github.event.pull_request.labels.*.name, 'run-eas')
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-expo-eas-build-and-distribute.yml
+    with:
+      branch: ${{ github.event.pull_request.head.sha }}
+      platform: android
+      eas_profile: development
+      upload_to_firebase: false
+      firebase_groups: internal-qa
+      firebase_android_app: dev
+      firebase_ios_app: dev
+      release_notes: ""
+      artifact_name: expo-eas-android-pr-${{ github.run_number }}
+    secrets: inherit
+
+  eas-ios-pr:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      github.event_name == 'pull_request' &&
+      needs.detect.outputs.build_system == 'expo-local' &&
+      (github.base_ref == 'main' || github.base_ref == 'master' || github.base_ref == 'development') &&
+      contains(github.event.pull_request.labels.*.name, 'run-eas')
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-expo-eas-build-and-distribute.yml
+    with:
+      branch: ${{ github.event.pull_request.head.sha }}
+      platform: ios
+      eas_profile: development
+      upload_to_firebase: false
+      firebase_groups: internal-qa
+      firebase_android_app: dev
+      firebase_ios_app: dev
+      release_notes: ""
+      artifact_name: expo-eas-ios-pr-${{ github.run_number }}
+    secrets: inherit
+
+  eas-android-push:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      github.event_name == 'push' &&
+      needs.detect.outputs.build_system == 'expo-local' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development')
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-expo-eas-build-and-distribute.yml
+    with:
+      branch: ${{ github.sha }}
+      platform: android
+      eas_profile: development
+      upload_to_firebase: true
+      firebase_groups: internal-qa
+      firebase_android_app: dev
+      firebase_ios_app: dev
+      release_notes: ""
+      artifact_name: expo-eas-android-push-${{ github.run_number }}
+    secrets: inherit
+
+  eas-ios-push:
+    if: |
+      (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
+      github.event_name == 'push' &&
+      needs.detect.outputs.build_system == 'expo-local' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/development')
+    needs: [detect, js-lint, security, js-test]
+    uses: ./.github/workflows/rn-job-expo-eas-build-and-distribute.yml
+    with:
+      branch: ${{ github.sha }}
+      platform: ios
+      eas_profile: development
+      upload_to_firebase: true
+      firebase_groups: internal-qa
+      firebase_android_app: dev
+      firebase_ios_app: dev
+      release_notes: ""
+      artifact_name: expo-eas-ios-push-${{ github.run_number }}
+    secrets: inherit
+
+  eas-merge-gate:
+    if: |
+      always() &&
+      github.event_name == 'pull_request' &&
+      (github.base_ref == 'main' || github.base_ref == 'master' || github.base_ref == 'development') &&
+      needs.detect.outputs.build_system == 'expo-local'
+    needs: [detect, js-lint, security, js-test, eas-android-pr, eas-ios-pr]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require run-eas label and successful EAS jobs
+        env:
+          ANDROID_RESULT: ${{ needs.eas-android-pr.result }}
+          IOS_RESULT: ${{ needs.eas-ios-pr.result }}
+          LABEL_JSON: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          python3 << 'PY'
+          import json, os, sys
+
+          labels = json.loads(os.environ["LABEL_JSON"])
+          if "run-eas" not in labels:
+              print("::error::Add the label run-eas to this PR and wait for EAS Android and iOS to succeed before merging.")
+              sys.exit(1)
+
+          android = os.environ["ANDROID_RESULT"]
+          ios = os.environ["IOS_RESULT"]
+          if android != "success" or ios != "success":
+              print(f"::error::EAS merge gate: Android job={android}, iOS job={ios} (both must be success).")
+              sys.exit(1)
+
+          print("eas-merge-gate: run-eas present and both EAS jobs succeeded.")
+          PY
