@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "plugins": [
+      "./plugins/withAndroidPip",
+      "react-native-video",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "extraMavenRepos": [
+              "../../node_modules/@notifee/react-native/android/libs"
+            ]
+          }
+        }
+      ]
+    ],
+    "ios": {
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "picture-in-picture"
+        ]
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ]
+    },
+    "extra": {
+      "appEnv": "development",
+      "apiBaseUrl": "https://dev-api.example.com/",
+      "eas": {
+        "projectId": "85155c9b-f302-4b7b-ac6d-4f3cb88a3cb7"
+      }
+    }
+  }
+}
