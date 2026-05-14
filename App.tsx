@@ -8,19 +8,19 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemedNavigationContainer } from "./src/navigation/ThemedNavigationContainer";
 import { QueryProvider } from "./src/query/QueryProvider";
 import { AppThemeProvider } from "./src/theme/ThemeContext";
-import { FeedbackProvider } from './src/feedback';
+import { FeedbackProvider } from "./src/feedback";
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <SafeAreaProvider>
-                <FeedbackProvider>
-          <QueryProvider>
-            <AppThemeProvider>
-              <ThemedNavigationContainer />
-            </AppThemeProvider>
-          </QueryProvider>
+          <FeedbackProvider>
+            <QueryProvider>
+              <AppThemeProvider>
+                <ThemedNavigationContainer />
+              </AppThemeProvider>
+            </QueryProvider>
           </FeedbackProvider>
         </SafeAreaProvider>
       </BottomSheetModalProvider>

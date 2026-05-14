@@ -11,8 +11,8 @@ import { AboutDrawerScreen } from "../screens/drawer/AboutDrawerScreen";
 import type { DrawerParamList } from "./types";
 import { MainTabs } from "./MainTabs";
 import { SettingsScreen } from "../screens/profile/SettingsScreen";
-import { MediaPlayerScreen } from '../screens/MediaPlayerScreen';
-import { FeedbackCatalogScreen } from '../screens/FeedbackCatalogScreen';
+import { MediaPlayerScreen } from "../screens/MediaPlayerScreen";
+import { FeedbackCatalogScreen } from "../screens/FeedbackCatalogScreen";
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
@@ -68,15 +68,18 @@ export function MainDrawer() {
         options={{ title: t("drawer.aboutTitle") }}
       />
       <Drawer.Screen
-              name="MediaPlayer"
-              component={MediaPlayerScreen}
-              options={{ title: 'Media player', drawerLabel: 'Media player (HLS / DRM / offline / PiP)' }}
-            />
+        name="MediaPlayer"
+        component={MediaPlayerScreen}
+        options={{
+          title: "Media player",
+          drawerLabel: "Media player (HLS / DRM / offline / PiP)",
+        }}
+      />
       <Drawer.Screen
-              name="FeedbackCatalog"
-              component={FeedbackCatalogScreen}
-              options={{ title: 'Feedback', drawerLabel: 'Feedback Catalog' }}
-            />
+        name="FeedbackCatalog"
+        component={FeedbackCatalogScreen}
+        options={{ title: "Feedback", drawerLabel: "Feedback Catalog" }}
+      />
     </Drawer.Navigator>
   );
 }
