@@ -23,3 +23,4 @@ npm start
 ```
 
 See [Expo documentation](https://docs.expo.dev/) for environment setup, `expo prebuild`, and EAS builds.
+
