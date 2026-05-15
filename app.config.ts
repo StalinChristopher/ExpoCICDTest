@@ -75,8 +75,8 @@ const flavors: Record<
   },
   production: {
     name: "ExpoCICDTest",
-    androidPackage: "com.codeandtheory.templatepipelinetest",
-    iosBundleIdentifier: "com.codeandtheory.templatepipelinetest",
+    androidPackage: "com.codeandtheory.templatepipelinetest.dist",
+    iosBundleIdentifier: "com.codeandtheory.templatepipelinetest.dist",
   },
 };
 

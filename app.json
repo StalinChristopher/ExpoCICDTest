@@ -19,8 +19,10 @@
         "UIBackgroundModes": [
           "audio",
           "picture-in-picture"
-        ]
-      }
+        ],
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "supportsTablet": true
     },
     "android": {
       "permissions": [
