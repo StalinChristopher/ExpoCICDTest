@@ -118,25 +118,35 @@ jobs:
           set -euo pipefail
           OUT_DIR="${RUNNER_TEMP}/eas-ci-output"
           mkdir -p "$OUT_DIR"
+          DOWNLOAD_JSON="${RUNNER_TEMP}/eas-download.json"
           # eas build:download must run in the Expo project root (eas.json). Do not cd into an empty temp dir.
           cd "${GITHUB_WORKSPACE}"
+          set +e
           npx eas-cli build:download \
             --non-interactive \
-            --build-id "${{ steps.eas_build.outputs.build_id }}"
-          shopt -s nullglob
-          apk=(./*.apk)
-          ipa=(./*.ipa)
-          if [ ${#apk[@]} -gt 0 ]; then
-            cp "${apk[0]}" "$OUT_DIR/upload.apk"
+            --json \
+            --build-id "${{ steps.eas_build.outputs.build_id }}" \
+            > "$DOWNLOAD_JSON" 2> "${RUNNER_TEMP}/eas-download-stderr.log"
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            echo "::error::eas build:download failed (exit $RC)"
+            tail -n 80 "${RUNNER_TEMP}/eas-download-stderr.log" || true
+            cat "$DOWNLOAD_JSON" 2>/dev/null || true
+            exit "$RC"
+          fi
+          PLATFORM="${{ inputs.platform }}"
+          SRC="$(python3 .github/scripts/eas_extract_download_path.py "$DOWNLOAD_JSON" "$PLATFORM")"
+          if [ "$PLATFORM" = "android" ]; then
+            cp "$SRC" "$OUT_DIR/upload.apk"
             echo "artifact_path=$OUT_DIR/upload.apk" >> "$GITHUB_OUTPUT"
             echo "artifact_type=apk" >> "$GITHUB_OUTPUT"
-          elif [ ${#ipa[@]} -gt 0 ]; then
-            cp "${ipa[0]}" "$OUT_DIR/upload.ipa"
+          elif [ "$PLATFORM" = "ios" ]; then
+            cp "$SRC" "$OUT_DIR/upload.ipa"
             echo "artifact_path=$OUT_DIR/upload.ipa" >> "$GITHUB_OUTPUT"
             echo "artifact_type=ipa" >> "$GITHUB_OUTPUT"
           else
-            echo "::error::No .apk or .ipa found after eas build:download"
-            ls -la
+            echo "::error::Unsupported platform: $PLATFORM"
             exit 1
           fi
 
