@@ -19,12 +19,12 @@ on:
         description: "iOS bundle ID for bare Fastlane (must match Xcode and provisioning profile)"
         type: string
         required: false
-        default: com.codeandtheory.edward-jones-poc.dist
+        default: com.codeandtheory.templatepipelinetest
       ios_scheme:
         description: "Xcode scheme used by Fastlane gym"
         type: string
         required: false
-        default: TemplatePipelineReactNative_prod
+        default: ExpoCICDTest
     secrets:
       APP_STORE_CONNECT_KEY_ID:
         required: true
@@ -123,12 +123,12 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
         run: |
-          IPA_PATH="$GITHUB_WORKSPACE/build/template-pipeline-react-native.ipa"
+          IPA_PATH="$GITHUB_WORKSPACE/build/ExpoCICDTest.ipa"
           bundle exec fastlane upload_testflight_ipa "ipa:$IPA_PATH"
       - uses: actions/upload-artifact@v4
         with:
           name: ios-template-pipeline-react-native-staging-ipa
-          path: build/template-pipeline-react-native.ipa
+          path: build/ExpoCICDTest.ipa
           if-no-files-found: warn
       - name: Cleanup keychain
         if: always()

@@ -6,10 +6,10 @@ on:
     inputs:
       ios_workspace:
         type: string
-        default: ios/TemplatePipelineReactNative.xcworkspace
+        default: ios/ExpoCICDTest.xcworkspace
       ios_scheme:
         type: string
-        default: TemplatePipelineReactNative
+        default: ExpoCICDTest
       simulator_destination:
         type: string
         default: auto
