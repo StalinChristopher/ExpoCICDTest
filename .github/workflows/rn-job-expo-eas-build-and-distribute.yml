@@ -118,7 +118,8 @@ jobs:
           set -euo pipefail
           OUT_DIR="${RUNNER_TEMP}/eas-ci-output"
           mkdir -p "$OUT_DIR"
-          cd "$OUT_DIR"
+          # eas build:download must run in the Expo project root (eas.json). Do not cd into an empty temp dir.
+          cd "${GITHUB_WORKSPACE}"
           npx eas-cli build:download \
             --non-interactive \
             --build-id "${{ steps.eas_build.outputs.build_id }}"
