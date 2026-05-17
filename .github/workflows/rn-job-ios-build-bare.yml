@@ -7,12 +7,12 @@ on:
         description: "iOS bundle ID for Fastlane (must match Xcode and provisioning profile)"
         type: string
         required: false
-        default: com.codeandtheory.templatepipelinetest
+        default: com.codeandtheory.edward-jones-poc.dist
       ios_scheme:
         description: "Xcode scheme used by Fastlane gym"
         type: string
         required: false
-        default: ExpoCICDTest
+        default: TemplatePipelineReactNative_prod
     secrets:
       APP_STORE_CONNECT_KEY_ID:
         required: true
@@ -30,14 +30,14 @@ on:
         required: false
 
 env:
-  XCODE_VERSION: latest-stable
+  # Expo SDK 55 requires Xcode 26+; EAS defaults to 26.2. Same pin for bare + Expo iOS jobs.
+  XCODE_VERSION: "26.2"
 
 jobs:
   gym:
     runs-on: macos-15
     env:
       APP_IDENTIFIER: ${{ inputs.app_identifier }}
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -47,7 +47,7 @@ jobs:
       - run: bash .github/scripts/install_js_deps.sh auto
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "26.2"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.1"
@@ -104,7 +104,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-template-pipeline-react-native-staging-ipa
-          path: build/ExpoCICDTest.ipa
+          path: build/template-pipeline-react-native.ipa
           if-no-files-found: warn
       - name: Cleanup keychain
         if: always()

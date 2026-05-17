@@ -67,6 +67,7 @@ jobs:
     with:
       coverage_threshold_percent: "80"
 
+  # Gate: Expo apps must commit android/ + ios/ (expo prebuild); bare repos no-op here. Same ref as native jobs (PR head).
   expo-native-dirs:
     if: |
       (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
@@ -85,6 +86,8 @@ jobs:
           BUILD_SYSTEM: ${{ needs.detect.outputs.build_system }}
         run: bash .github/scripts/assert_expo_native_dirs.sh "$BUILD_SYSTEM"
 
+  # --- Bare + Expo (committed native): dev APK + dev IPA (PR = artifacts; push = Firebase). Manual dist: rn-firebase-release.yml ---
+
   android-dev:
     if: |
       (github.event_name != 'workflow_dispatch' || inputs.run_internal_release_only == false) &&
@@ -97,8 +100,8 @@ jobs:
     with:
       branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       firebase_android_app: dev
-      gradle_task: assembleRelease
-      artifact_glob: app/build/outputs/apk/release/*.apk
+      gradle_task: assembleDevRelease
+      artifact_glob: app/build/outputs/apk/dev/release/*.apk
       release_notes: ""
       dry_run: false
       upload_to_firebase: ${{ github.event_name == 'push' }}
@@ -117,8 +120,8 @@ jobs:
     with:
       branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       firebase_ios_app: dev
-      app_identifier: com.codeandtheory.templatepipelinetest.dev
-      ios_scheme: ExpoCICDTest
+      app_identifier: com.codeandtheory.edward-jones-poc.dev
+      ios_scheme: TemplatePipelineReactNative
       dry_run: false
       upload_to_firebase: ${{ github.event_name == 'push' }}
       firebase_groups: internal-qa

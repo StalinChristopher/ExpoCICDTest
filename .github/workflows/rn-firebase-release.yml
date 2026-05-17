@@ -83,8 +83,8 @@ jobs:
     with:
       branch: ${{ inputs.branch }}
       firebase_android_app: dev
-      gradle_task: assembleRelease
-      artifact_glob: app/build/outputs/apk/release/*.apk
+      gradle_task: assembleDevRelease
+      artifact_glob: app/build/outputs/apk/dev/release/*.apk
       release_notes: ${{ inputs.release_notes }}
       dry_run: ${{ inputs.dry_run }}
       firebase_groups: ${{ inputs.firebase_groups }}
@@ -99,8 +99,8 @@ jobs:
     with:
       branch: ${{ inputs.branch }}
       firebase_ios_app: dist
-      app_identifier: com.codeandtheory.templatepipelinetest
-      ios_scheme: ExpoCICDTest
+      app_identifier: com.codeandtheory.edward-jones-poc.dist
+      ios_scheme: TemplatePipelineReactNative_prod
       dry_run: ${{ inputs.dry_run }}
       firebase_groups: ${{ inputs.firebase_groups }}
       release_notes: ${{ inputs.release_notes }}
@@ -115,8 +115,8 @@ jobs:
     with:
       branch: ${{ inputs.branch }}
       firebase_ios_app: dev
-      app_identifier: com.codeandtheory.templatepipelinetest.dev
-      ios_scheme: ExpoCICDTest
+      app_identifier: com.codeandtheory.edward-jones-poc.dev
+      ios_scheme: TemplatePipelineReactNative
       dry_run: ${{ inputs.dry_run }}
       firebase_groups: ${{ inputs.firebase_groups }}
       release_notes: ${{ inputs.release_notes }}

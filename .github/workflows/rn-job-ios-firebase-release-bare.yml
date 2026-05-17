@@ -23,12 +23,12 @@ on:
         description: "iOS bundle ID (must match Xcode, signing profile, and Firebase iOS app)"
         type: string
         required: false
-        default: com.codeandtheory.templatepipelinetest
+        default: com.codeandtheory.edward-jones-poc.dist
       ios_scheme:
         description: "Xcode scheme used by Fastlane gym"
         type: string
         required: false
-        default: ExpoCICDTest
+        default: TemplatePipelineReactNative_prod
       firebase_groups:
         description: Comma-separated Firebase App Distribution tester groups
         type: string
@@ -65,14 +65,14 @@ on:
         required: false
 
 env:
-  XCODE_VERSION: latest-stable
+  # Expo SDK 55 requires Xcode 26+; EAS defaults to 26.2. Same pin for bare + Expo iOS jobs.
+  XCODE_VERSION: "26.2"
 
 jobs:
   release:
     runs-on: macos-15
     env:
       APP_IDENTIFIER: ${{ inputs.app_identifier }}
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
         with:
@@ -86,7 +86,7 @@ jobs:
       - run: bash .github/scripts/install_js_deps.sh auto
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "26.2"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
@@ -166,7 +166,7 @@ jobs:
           printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
           chmod 600 "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          CMD=(npx --yes firebase-tools@13 appdistribution:distribute "build/ExpoCICDTest.ipa" --app "$FIREBASE_APP_ID" --groups "$GROUPS")
+          CMD=(npx --yes firebase-tools@13 appdistribution:distribute "build/template-pipeline-react-native.ipa" --app "$FIREBASE_APP_ID" --groups "$GROUPS")
           if [ -n "${RELEASE_NOTES:-}" ]; then
             CMD+=(--release-notes "$RELEASE_NOTES")
           fi
@@ -174,7 +174,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-firebase-${{ inputs.firebase_ios_app }}-${{ github.run_number }}
-          path: build/ExpoCICDTest.ipa
+          path: build/template-pipeline-react-native.ipa
           if-no-files-found: warn
       - name: Notify Slack (workflow webhook)
         if: ${{ inputs.dry_run == false && inputs.upload_to_firebase && steps.upload_firebase.outcome == 'success' }}

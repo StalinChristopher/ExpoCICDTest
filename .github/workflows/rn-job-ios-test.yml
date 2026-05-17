@@ -6,10 +6,10 @@ on:
     inputs:
       ios_workspace:
         type: string
-        default: ios/ExpoCICDTest.xcworkspace
+        default: ios/TemplatePipelineReactNative.xcworkspace
       ios_scheme:
         type: string
-        default: ExpoCICDTest
+        default: TemplatePipelineReactNative
       simulator_destination:
         type: string
         default: auto
@@ -20,7 +20,8 @@ on:
         description: 0 to skip; otherwise minimum line coverage (0–100)
 
 env:
-  XCODE_VERSION: latest-stable
+  # Expo SDK 55 requires Xcode 26+; EAS defaults to 26.2. Same pin for bare + Expo iOS jobs.
+  XCODE_VERSION: "26.2"
 
 jobs:
   test-and-coverage:
@@ -31,7 +32,6 @@ jobs:
       WS: ${{ inputs.ios_workspace }}
       SIMULATOR_DESTINATION: ${{ inputs.simulator_destination }}
       COVERAGE_THRESHOLD_PERCENT: ${{ inputs.coverage_threshold_percent }}
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,7 +42,7 @@ jobs:
       - run: bash .github/scripts/install_js_deps.sh auto
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "26.2"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"

@@ -13,13 +13,12 @@ on:
         required: true
 
 env:
-  XCODE_VERSION: latest-stable
+  # Expo SDK 55 requires Xcode 26+; EAS defaults to 26.2. Same pin for bare + Expo iOS jobs.
+  XCODE_VERSION: "26.2"
 
 jobs:
   eas-ios-local:
     runs-on: macos-15
-    env:
-      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,7 +29,7 @@ jobs:
       - run: bash .github/scripts/install_js_deps.sh auto
       - uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: latest-stable
+          xcode-version: "26.2"
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.1"
