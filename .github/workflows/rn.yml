@@ -100,8 +100,8 @@ jobs:
     with:
       branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       firebase_android_app: dev
-      gradle_task: assembleDevRelease
-      artifact_glob: app/build/outputs/apk/dev/release/*.apk
+      gradle_task: assembleRelease
+      artifact_glob: app/build/outputs/apk/release/*.apk
       release_notes: ""
       dry_run: false
       upload_to_firebase: ${{ github.event_name == 'push' }}
@@ -120,8 +120,8 @@ jobs:
     with:
       branch: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
       firebase_ios_app: dev
-      app_identifier: com.codeandtheory.edward-jones-poc.dev
-      ios_scheme: TemplatePipelineReactNative
+      app_identifier: com.codeandtheory.templatepipelinetest.dev
+      ios_scheme: ExpoCICDTest
       dry_run: false
       upload_to_firebase: ${{ github.event_name == 'push' }}
       firebase_groups: internal-qa

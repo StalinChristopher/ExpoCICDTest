@@ -23,12 +23,12 @@ on:
         description: "iOS bundle ID (must match Xcode, signing profile, and Firebase iOS app)"
         type: string
         required: false
-        default: com.codeandtheory.edward-jones-poc.dist
+        default: com.codeandtheory.templatepipelinetest.dist
       ios_scheme:
         description: "Xcode scheme used by Fastlane gym"
         type: string
         required: false
-        default: TemplatePipelineReactNative_prod
+        default: ExpoCICDTest
       firebase_groups:
         description: Comma-separated Firebase App Distribution tester groups
         type: string
@@ -166,7 +166,7 @@ jobs:
           printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
           chmod 600 "$RUNNER_TEMP/firebase-sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
-          CMD=(npx --yes firebase-tools@13 appdistribution:distribute "build/template-pipeline-react-native.ipa" --app "$FIREBASE_APP_ID" --groups "$GROUPS")
+          CMD=(npx --yes firebase-tools@13 appdistribution:distribute "build/ExpoCICDTest.ipa" --app "$FIREBASE_APP_ID" --groups "$GROUPS")
           if [ -n "${RELEASE_NOTES:-}" ]; then
             CMD+=(--release-notes "$RELEASE_NOTES")
           fi
@@ -174,7 +174,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ios-firebase-${{ inputs.firebase_ios_app }}-${{ github.run_number }}
-          path: build/template-pipeline-react-native.ipa
+          path: build/ExpoCICDTest.ipa
           if-no-files-found: warn
       - name: Notify Slack (workflow webhook)
         if: ${{ inputs.dry_run == false && inputs.upload_to_firebase && steps.upload_firebase.outcome == 'success' }}
